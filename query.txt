@@ -1,0 +1,72 @@
+-- Examine the table
+SELECT *
+FROM state_climate;
+
+-- Query to return state, year, tempf and running_avg_temp
+SELECT state, year, tempf,
+AVG(tempf) OVER (
+  PARTITION BY state
+  ORDER BY year
+) AS 'running_avg_temp'
+FROM state_climate;
+
+-- Explore the lowest temperature for each state
+SELECT state, year, tempc,
+FIRST_VALUE(tempc) OVER (
+  PARTITION BY state
+  ORDER BY tempc
+) AS 'lowest_temp'
+FROM state_climate;
+
+-- Find highest record
+SELECT state, year, tempc,
+LAST_VALUE(tempc) OVER (
+  PARTITION BY state
+  ORDER BY tempc
+  RANGE BETWEEN UNBOUNDED PRECEDING AND 
+      UNBOUNDED FOLLOWING
+) AS 'highest_temp'
+FROM state_climate;
+
+-- Examine the changes in temperature
+SELECT state, year, tempc,
+tempc - LAG(tempc,1,0) OVER (
+  PARTITION BY state
+  ORDER BY year
+  ) AS 'change_in_temp'
+FROM state_climate
+ORDER BY change_in_temp DESC;
+
+-- Return the rank of the coldest temperature
+SELECT 
+RANK() OVER (
+  ORDER BY tempc
+  ) AS 'coldest_rank',
+state, year, tempc
+FROM state_climate;
+
+-- Return the rank for the warmest temp/year for each state
+SELECT 
+RANK() OVER (
+  PARTITION BY state
+  ORDER BY tempc DESC
+  ) AS 'warmest_rank',
+state, year, tempc
+FROM state_climate;
+
+-- Return average temperatures in quartiles
+SELECT 
+NTILE(4) OVER (
+    PARTITION BY state
+  ORDER BY tempc
+  ) AS 'quartile',
+state, year, tempc
+FROM state_climate;
+
+-- Return average yearly temperatures in quartiles(5)
+SELECT 
+NTILE(5) OVER (
+  ORDER BY tempc
+  ) AS 'quintile',
+state, year, tempc
+FROM state_climate;
